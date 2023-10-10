@@ -1,11 +1,30 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 interface IntervalBTNProps {
   pin: string;
+  onChangeValue: any;
 }
 
-export const IntervalBTns: React.FC<IntervalBTNProps> = ({ pin }) => {
+export const IntervalBTns: React.FC<IntervalBTNProps> = ({
+  pin,
+  onChangeValue,
+}) => {
+  const [value, setValue] = useState<string>("");
+
+  const inputChange = (text: string) => {
+    const num = parseInt(text, 10);
+
+    if (text === "") {
+      setValue("");
+      onChangeValue("");
+    } else if (!isNaN(num) && num >= 0 && num <= 12) {
+      setValue(text);
+      onChangeValue(text);
+    }
+  };
+
   return (
     <View style={styles.btnZ}>
       <View style={styles.btnC}>
@@ -15,7 +34,13 @@ export const IntervalBTns: React.FC<IntervalBTNProps> = ({ pin }) => {
           end={{ x: 1, y: 1 }}
           style={styles.background}
         >
-          <Text style={styles.BtnT}>5</Text>
+          <TextInput
+            keyboardType="numeric"
+            style={styles.BtnT}
+            onChangeText={inputChange}
+            maxLength={2}
+            value={value}
+          />
         </LinearGradient>
       </View>
       <Text style={styles.pin}>{pin}</Text>

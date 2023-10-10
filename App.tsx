@@ -1,23 +1,37 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
-import { DataSettings, SetterView } from "./components/Views";
-import { Appearance, useColorScheme } from "react-native";
+import { Button, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  BrightnessLvl,
+  DataSettings,
+  RingMode,
+  SetterView,
+  Volume,
+} from "./components/Views";
 import { RestOffVol, Skeletoon } from "./components/Skeletoons";
 import { ActiveSetsPanel } from "./components/ActualParams";
+import * as TaskManager from "expo-task-manager";
+import * as BackgroundFetch from "expo-background-fetch";
+import React from "react";
 
 export default function App() {
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <SetterView title_text={"Volume"}>
-        <Skeletoon restoff={<RestOffVol />} />
+        <Skeletoon restoff={<RestOffVol emoji="🔕" />} />
       </SetterView>
-      <DataSettings />
+      <DataSettings prctage={false}>
+        <RingMode />
+      </DataSettings>
       <SetterView title_text={"Brightness"}>
-        <Skeletoon restoff={<RestOffVol />} />
+        <Skeletoon restoff={<RestOffVol emoji="☀️" />} />
       </SetterView>
+      <DataSettings prctage={true}>
+        <BrightnessLvl />
+      </DataSettings>
       <ActiveSetsPanel />
+
       <StatusBar style="auto" />
-    </View>
+    </ScrollView>
   );
 }
 

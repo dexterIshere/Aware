@@ -1,30 +1,41 @@
 import { StyleSheet, Text, View } from "react-native";
 import { IntervalBTns } from "./Btns";
-import { ReactNode } from "react";
+import { FC, ReactNode, useState } from "react";
 
 interface SkeletoonProp {
-  restoff: ReactNode;
+  restoff?: ReactNode;
+  emoji?: string;
 }
 
-export const Skeletoon: React.FC<SkeletoonProp> = ({ restoff }) => {
+export const Skeletoon: FC<SkeletoonProp> = ({ restoff }) => {
+  const [amValue, setAmValue] = useState<string>("");
+  const [pmValue, setPmValue] = useState<string>("");
+
+  const handleAmChange = (newVal: string) => {
+    setAmValue(newVal);
+  };
+
+  const handlePmChange = (newVal: string) => {
+    setPmValue(newVal);
+  };
   return (
     <View style={styles.SkeletC}>
       <View style={styles.intervalsC}>
-        <IntervalBTns pin={"am"} />
+        <IntervalBTns pin={"am"} onChangeValue={handleAmChange} />
         <Text style={styles.SkeletT}>to</Text>
-        <IntervalBTns pin={"pm"} />
+        <IntervalBTns pin={"pm"} onChangeValue={handlePmChange} />
       </View>
       {restoff}
     </View>
   );
 };
 
-export const RestOffVol = () => {
+export const RestOffVol: FC<SkeletoonProp> = ({ emoji }) => {
   return (
     <View style={styles.restOfft}>
       <Text style={styles.pin}>rest of the time</Text>
       <View>
-        <Text style={styles.restOfftT}>🔕</Text>
+        <Text style={styles.restOfftT}>{emoji}</Text>
       </View>
     </View>
   );
