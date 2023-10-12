@@ -13,6 +13,7 @@ import {
   useRingerMode,
 } from "react-native-volume-manager";
 import DeviceBrightness from "@adrianso/react-native-device-brightness";
+import * as Notifications from "expo-notifications";
 interface SetterViewProps {
   title_text: string;
   children: ReactNode;
@@ -103,20 +104,84 @@ export const Volume: FC<VolumeProps> = ({
   );
 };
 
-export const RingMode = () => {
-  const [activeMod, setActiveMod] = useState("🔔");
-  const { setMode } = useRingerMode();
+interface RingModProps {
+  intervalData: number[];
+}
 
+export const RingMode: FC<RingModProps> = ({ intervalData }) => {
   enum RINGER_MODE {
+    normal = 2,
     silent = 0,
     vibrate = 1,
-    normal = 2,
   }
 
   const modeMapping: Record<string, RINGER_MODE> = {
     "🔔": RINGER_MODE.normal,
     "🤫": RINGER_MODE.silent,
     "📳": RINGER_MODE.vibrate,
+  };
+
+  const [activeMod, setActiveMod] = useState("🔔");
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => {
+      changeModOnNotif();
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      };
+    },
+  });
+
+  const changeModOnNotif = () => {
+    const now = new Date();
+    const { setMode } = useRingerMode();
+
+    if (now.getHours() >= 12) {
+      setMode(1);
+    } else {
+      setMode(2);
+    }
+  };
+
+  const scheduleNotificationAt = async (
+    hour: number,
+    mod: string,
+    isAfternoon: boolean
+  ) => {
+    const now = new Date();
+    const targetDate = new Date();
+    targetDate.setHours(isAfternoon ? hour + 12 : hour, 0, 0, 0);
+
+    if (targetDate <= now) {
+      targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    const secondsUntilTarget = (targetDate.getTime() - now.getTime()) / 1000;
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: `AWARE`,
+        body: `Il est ${hour} ${isAfternoon ? "PM" : "AM"}  ${mod}!`,
+      },
+      trigger: {
+        seconds: secondsUntilTarget,
+        repeats: true,
+      },
+    });
+  };
+
+  const scheduleNotifications = (
+    morningHour: number,
+    afternoonHour: number,
+    mod: string
+  ) => {
+    scheduleNotificationAt(morningHour, mod, false);
+
+    scheduleNotificationAt(afternoonHour, mod, true);
+    console.log([morningHour, afternoonHour]);
   };
 
   return (
@@ -141,7 +206,8 @@ export const RingMode = () => {
           ]}
           onPress={() => {
             setActiveMod(mod);
-            setMode(modeMapping[mod]);
+
+            scheduleNotifications(intervalData[0], intervalData[1], mod);
           }}
         >
           <Text style={styleSet.ringModeT}>{mod}</Text>
@@ -151,10 +217,36 @@ export const RingMode = () => {
   );
 };
 
-export const BrightnessLvl = () => {
-  const brightness = DeviceBrightness.getBrightnessLevel();
-  console.log(brightness);
-  return <View></View>;
+type GaugeProps = {
+  min: number;
+  max: number;
+};
+
+export const BrightnessLvl: FC<GaugeProps> = ({ min, max }) => {
+  const [brightnessLvl, setBrightnessLvl] = useState<number>(6);
+
+  useEffect(() => {
+    const Getbrightness = async () => {
+      const brightness = await DeviceBrightness.getSystemBrightnessLevel();
+      setBrightnessLvl(brightness);
+    };
+
+    Getbrightness();
+  }, []);
+  const percentage = ((brightnessLvl - min) / (max - min)) * 100;
+
+  return (
+    <View style={lumStyle.lumSetZ}>
+      <View style={lumStyle.lumSetC}>
+        <LinearGradient
+          colors={["#93b2ff", "#ffdd2f"]}
+          start={{ x: 0.3, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[lumStyle.gauge, { width: `${percentage}%` }]}
+        />
+      </View>
+    </View>
+  );
 };
 
 export const PrctgSelector = () => {
@@ -245,11 +337,34 @@ const styleSet = StyleSheet.create({
   },
 });
 
+const lumStyle = StyleSheet.create({
+  lumSetZ: {
+    height: 30,
+    width: "100%",
+    paddingHorizontal: 1,
+    paddingVertical: 1,
+    flexDirection: "row",
+  },
+  lumSetC: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    flex: 1,
+    overflow: "hidden",
+  },
+  gauge: {
+    flex: 1,
+    borderRadius: 15,
+  },
+});
+
 const styles = StyleSheet.create({
   setterContainer: {
     width: "100%",
     height: "16%",
-    marginBottom: 30,
+    marginBottom: 15,
   },
   container: {
     backgroundColor: "#fff",

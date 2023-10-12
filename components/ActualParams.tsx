@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { Volume } from "./Views";
+import { BrightnessLvl, Volume } from "./Views";
 import { useEffect, useRef, useState } from "react";
 import { VolumeManager } from "react-native-volume-manager";
 
@@ -38,6 +38,8 @@ export const ActiveSetsPanel = () => {
         <Volume clickable={false} currentVolume={currentVolume} />
         <Text style={style.pannelT}>⏰ Vol</Text>
         <Volume clickable={false} currentVolume={currentAlarmVolume} />
+        <Text style={style.pannelT}>☀️ lum</Text>
+        <BrightnessLvl min={1} max={16} />
       </View>
     </View>
   );

@@ -1,23 +1,34 @@
 import { StyleSheet, Text, View } from "react-native";
 import { IntervalBTns } from "./Btns";
-import { FC, ReactNode, useState } from "react";
+import React, { FC, ReactNode, useEffect, useState } from "react";
 
 interface SkeletoonProp {
   restoff?: ReactNode;
   emoji?: string;
+  onChangeInterval?: (interval: [number, number]) => void;
 }
 
-export const Skeletoon: FC<SkeletoonProp> = ({ restoff }) => {
-  const [amValue, setAmValue] = useState<string>("");
-  const [pmValue, setPmValue] = useState<string>("");
+const SkeletoonComponent: FC<SkeletoonProp> = ({
+  restoff,
+  onChangeInterval,
+}) => {
+  const [amValue, setAmValue] = useState<number>(0);
+  const [pmValue, setPmValue] = useState<number>(0);
 
-  const handleAmChange = (newVal: string) => {
-    setAmValue(newVal);
+  const handleAmChange = (newVal: number) => {
+    setAmValue(Number(newVal));
   };
 
-  const handlePmChange = (newVal: string) => {
-    setPmValue(newVal);
+  const handlePmChange = (newVal: number) => {
+    setPmValue(Number(newVal));
   };
+
+  useEffect(() => {
+    if (onChangeInterval) {
+      onChangeInterval([amValue, pmValue]);
+    }
+  }, [amValue, pmValue, onChangeInterval]);
+
   return (
     <View style={styles.SkeletC}>
       <View style={styles.intervalsC}>
@@ -29,6 +40,7 @@ export const Skeletoon: FC<SkeletoonProp> = ({ restoff }) => {
     </View>
   );
 };
+export const Skeletoon = React.memo(SkeletoonComponent);
 
 export const RestOffVol: FC<SkeletoonProp> = ({ emoji }) => {
   return (

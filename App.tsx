@@ -9,24 +9,37 @@ import {
 } from "./components/Views";
 import { RestOffVol, Skeletoon } from "./components/Skeletoons";
 import { ActiveSetsPanel } from "./components/ActualParams";
-import * as TaskManager from "expo-task-manager";
-import * as BackgroundFetch from "expo-background-fetch";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import * as Notifications from "expo-notifications";
 
 export default function App() {
+  const [ringData, setRingData] = useState<number[]>([]);
+
+  const getRingInterval = useCallback(
+    (interval: number[]) => {
+      if (JSON.stringify(interval) !== JSON.stringify(ringData)) {
+        setRingData(interval);
+      }
+    },
+    [ringData]
+  );
+
   return (
     <ScrollView style={styles.container}>
       <SetterView title_text={"Volume"}>
-        <Skeletoon restoff={<RestOffVol emoji="🔕" />} />
+        <Skeletoon
+          onChangeInterval={getRingInterval}
+          restoff={<RestOffVol emoji="🔕" />}
+        />
       </SetterView>
       <DataSettings prctage={false}>
-        <RingMode />
+        <RingMode intervalData={ringData} />
       </DataSettings>
       <SetterView title_text={"Brightness"}>
         <Skeletoon restoff={<RestOffVol emoji="☀️" />} />
       </SetterView>
       <DataSettings prctage={true}>
-        <BrightnessLvl />
+        <BrightnessLvl min={1} max={16} />
       </DataSettings>
       <ActiveSetsPanel />
 
