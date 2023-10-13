@@ -14,6 +14,7 @@ import {
 } from "react-native-volume-manager";
 import DeviceBrightness from "@adrianso/react-native-device-brightness";
 import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 interface SetterViewProps {
   title_text: string;
   children: ReactNode;
@@ -109,47 +110,7 @@ interface RingModProps {
 }
 
 export const RingMode: FC<RingModProps> = ({ intervalData }) => {
-  enum RINGER_MODE {
-    normal = 2,
-    silent = 0,
-    vibrate = 1,
-  }
-
-  const modeMapping: Record<string, RINGER_MODE> = {
-    "🔔": RINGER_MODE.normal,
-    "🤫": RINGER_MODE.silent,
-    "📳": RINGER_MODE.vibrate,
-  };
-
-  const [activeMod, setActiveMod] = useState("🔔");
-
-  Notifications.setNotificationHandler({
-    handleNotification: async () => {
-      changeModOnNotif();
-      return {
-        shouldShowAlert: true,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
-      };
-    },
-  });
-
-  const changeModOnNotif = () => {
-    const now = new Date();
-    const { setMode } = useRingerMode();
-
-    if (now.getHours() >= 12) {
-      setMode(1);
-    } else {
-      setMode(2);
-    }
-  };
-
-  const scheduleNotificationAt = async (
-    hour: number,
-    mod: string,
-    isAfternoon: boolean
-  ) => {
+  const scheduleNotificationAt = async (hour: number, isAfternoon: boolean) => {
     const now = new Date();
     const targetDate = new Date();
     targetDate.setHours(isAfternoon ? hour + 12 : hour, 0, 0, 0);
@@ -159,12 +120,11 @@ export const RingMode: FC<RingModProps> = ({ intervalData }) => {
     }
 
     const secondsUntilTarget = (targetDate.getTime() - now.getTime()) / 1000;
-    await Notifications.cancelAllScheduledNotificationsAsync();
 
     await Notifications.scheduleNotificationAsync({
       content: {
         title: `AWARE`,
-        body: `Il est ${hour} ${isAfternoon ? "PM" : "AM"}  ${mod}!`,
+        body: `Time to change Ring Mod!`,
       },
       trigger: {
         seconds: secondsUntilTarget,
@@ -173,16 +133,35 @@ export const RingMode: FC<RingModProps> = ({ intervalData }) => {
     });
   };
 
-  const scheduleNotifications = (
+  const scheduleNotifications = async (
     morningHour: number,
-    afternoonHour: number,
-    mod: string
+    afternoonHour: number
   ) => {
-    scheduleNotificationAt(morningHour, mod, false);
-
-    scheduleNotificationAt(afternoonHour, mod, true);
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    scheduleNotificationAt(morningHour, false);
+    scheduleNotificationAt(afternoonHour, true);
     console.log([morningHour, afternoonHour]);
   };
+  const { setMode } = useRingerMode();
+
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => {
+        const now = new Date();
+        if (now.getHours() >= 12) {
+          setMode(1);
+          console.log("balala");
+        } else {
+          setMode(2);
+        }
+        return {
+          shouldShowAlert: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        };
+      },
+    });
+  }, [setMode]);
 
   return (
     <View
@@ -197,22 +176,14 @@ export const RingMode: FC<RingModProps> = ({ intervalData }) => {
         },
       ]}
     >
-      {["🔔", "🤫", "📳"].map((mod) => (
-        <TouchableOpacity
-          key={mod}
-          style={[
-            styleSet.ringModeBtn,
-            activeMod === mod && styleSet.ringModeActive,
-          ]}
-          onPress={() => {
-            setActiveMod(mod);
-
-            scheduleNotifications(intervalData[0], intervalData[1], mod);
-          }}
-        >
-          <Text style={styleSet.ringModeT}>{mod}</Text>
-        </TouchableOpacity>
-      ))}
+      <TouchableOpacity
+        style={[styleSet.ringModeBtn]}
+        onPress={() => {
+          scheduleNotifications(intervalData[0], intervalData[1]);
+        }}
+      >
+        <Text style={styleSet.ringModeT}>OK</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -315,25 +286,18 @@ const styleSet = StyleSheet.create({
   },
 
   ringModeBtn: {
-    borderRadius: 5,
     flex: 1,
-    aspectRatio: 1,
-    margin: 2,
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    borderColor: "rgba(44,50,105,0.3)",
-    borderWidth: 0.4,
   },
 
   ringModeT: {
     fontSize: 20,
     alignItems: "center",
     justifyContent: "center",
-    flex: 1,
-  },
-
-  ringModeActive: {
-    backgroundColor: "#bdffbd",
+    color: "rgba(44,50,105,0.6)",
+    fontWeight: "800",
   },
 });
 

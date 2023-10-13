@@ -48,7 +48,7 @@ export const ActiveSetsPanel = () => {
 const style = StyleSheet.create({
   pannelC: {
     borderTopColor: "#fff",
-    marginTop: 20,
+    marginTop: 10,
     borderTopWidth: 0.5,
   },
   pannelTitle: {
